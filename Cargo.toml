@@ -1,0 +1,2 @@
+[workspace]
+members = ["huoziyinshua_rs", "huoziyinshua_rs_cli"]
