@@ -1,6 +1,6 @@
 use anyhow::Result;
 use pinyin::ToPinyin;
-use std::{collections::HashMap, pin};
+use std::collections::HashMap;
 #[derive(Debug, Default)]
 pub struct Huoziyinshua {
     word_map: HashMap<String, String>,
@@ -61,19 +61,19 @@ impl Huoziyinshua {
         let pinyin_vec: Vec<String> = pinyin_str.split_whitespace().map(|s| s.to_string()).collect();
         println!("{:?} ", pinyin_vec);
 
-        let mut paths: Vec<&String> = Vec::new();
+        let mut paths: Vec<&str> = Vec::new();
         for word in pinyin_vec.iter() {
             if let Some(path) = self.word_map.get(word) {
-                paths.push(path);
+                paths.push(path.as_str());
             } else {
                 println!("{}: Not found", word);
             }
         }
         let samples =
-            connect::concat_audio(&paths)?;
-        connect::write_wav(&samples, "output.wav")?;
+            audio_processor::concat_audio(&paths)?;
+        audio_processor::write_wav(&samples, "output.wav")?;
         Ok(())
     }
 }
 
-pub mod connect;
+pub mod audio_processor;
