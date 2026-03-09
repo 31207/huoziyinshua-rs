@@ -1,15 +1,10 @@
+use anyhow::Ok;
 use huoziyinshua_rs::Huoziyinshua;
 
-fn main() {
-    let huoziyinshua = Huoziyinshua::new("./sources");
-    match huoziyinshua {
-        Ok(huoziyinshua) => {
-            println!("{:?}", huoziyinshua);
-            let _ = huoziyinshua.generate("我去啊诶爱你好，世界！说的道理啊啊诶你怎么死了尊");
-        }
-        Err(e) => {
-            eprintln!("Error: {}", e);
-        }
-    }
-
+fn main() -> anyhow::Result<()> {
+    let mut huoziyinshua = Huoziyinshua::new("./sources")?;
+    println!("{:?}", huoziyinshua);
+    huoziyinshua.generate("诶你怎么死了？说得道理。大家好啊！击败！今天来点大家想看的东西啊！兄弟你懂啊！")?;
+    huoziyinshua.save_wav("./output.wav")?;
+    Ok(())
 }

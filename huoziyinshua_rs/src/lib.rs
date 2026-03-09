@@ -1,9 +1,10 @@
-use anyhow::Result;
+use anyhow::{Ok, Result};
 use pinyin::ToPinyin;
 use std::collections::HashMap;
 #[derive(Debug, Default)]
 pub struct Huoziyinshua {
     word_map: HashMap<String, String>,
+    audio_data: Option<Vec<i16>>,
 }
 
 impl Huoziyinshua {
@@ -31,14 +32,24 @@ impl Huoziyinshua {
                 path.to_string() + &sep + &file_name,
             );
         }
-        Ok(Self { word_map })
+        Ok(Self {
+            word_map: word_map,
+            audio_data: None,
+        })
     }
-    pub fn generate(&self, sentence: &str) -> Result<()> {
+    pub fn generate(&mut self, sentence: &str) -> Result<()> {
         // 原声大碟替换表
         let yuan_sheng_da_die: HashMap<&str, &str> = HashMap::from([
             ("ai ni zen me si le", "anzmsl"),
             ("ei ni zen me si le", "anzmsl"),
-            ("shuo de dao li", "sddl")
+            ("shuo de dao li", "sddl"),
+            ("da jia hao a", "djha"),
+            ("ji bai", "jibai"),
+            (
+                "jin tian lai dian da jia xiang kan de dong xi a",
+                "jtlaidian",
+            ),
+            ("xiong di ni dong a", "xdnda"),
         ]);
 
         // 将输入的句子转换为拼音
@@ -58,7 +69,10 @@ impl Huoziyinshua {
         }
 
         println!("{:?} ", pinyin_str);
-        let pinyin_vec: Vec<String> = pinyin_str.split_whitespace().map(|s| s.to_string()).collect();
+        let pinyin_vec: Vec<String> = pinyin_str
+            .split_whitespace()
+            .map(|s| s.to_string())
+            .collect();
         println!("{:?} ", pinyin_vec);
 
         let mut paths: Vec<&str> = Vec::new();
@@ -69,10 +83,19 @@ impl Huoziyinshua {
                 println!("{}: Not found", word);
             }
         }
-        let samples =
-            audio_processor::concat_audio(&paths)?;
-        audio_processor::write_wav(&samples, "output.wav")?;
+        let samples = audio_processor::concat_audio(&paths)?;
+        self.audio_data.replace(samples);
         Ok(())
+    }
+    pub fn get_audio_data(&self) -> Option<&Vec<i16>> {
+        self.audio_data.as_ref()
+    }
+    pub fn save_wav(&self, path: &str) -> Result<()> {
+        if let Some(audio_data) = &self.audio_data {
+            audio_processor::write_wav(audio_data, path)?;
+            return Ok(());
+        }
+        Err(anyhow::anyhow!("No data to save"))
     }
 }
 
