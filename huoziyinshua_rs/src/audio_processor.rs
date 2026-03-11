@@ -7,6 +7,7 @@ use symphonia::default::get_probe;
 // 这个模块负责连接音频文件并生成最终的输出，完全由chatgpt生成，未经过修改
 // 因为本人对音频处理不太熟悉，所以这个模块的代码质量可能不太高，欢迎大家提出改进建议
 use std::fs::File;
+use std::io::{Seek, Write};
 use anyhow::Result;
 
 fn decode_file(path: &str) -> Result<Vec<i16>> {
@@ -85,7 +86,7 @@ pub fn concat_audio(files: &[&str]) -> Result<Vec<i16>> {
     Ok(result)
 }
 
-pub fn write_wav(samples: &[i16], path: &str) -> Result<()> {
+pub fn write_file<W: Write + Seek>(samples: &[i16], file: &mut W) -> Result<()> {
     let spec = hound::WavSpec {
         channels: 1,
         sample_rate: 44100,
@@ -93,7 +94,7 @@ pub fn write_wav(samples: &[i16], path: &str) -> Result<()> {
         sample_format: hound::SampleFormat::Int,
     };
 
-    let mut writer = hound::WavWriter::create(path, spec)?;
+    let mut writer = hound::WavWriter::new(file, spec)?;
 
     for s in samples {
         writer.write_sample(*s)?;

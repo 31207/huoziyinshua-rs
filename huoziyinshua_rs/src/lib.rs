@@ -1,8 +1,9 @@
 use anyhow::{Ok, Result};
+use base64::prelude::*;
 use hound::Sample;
 use pinyin::ToPinyin;
 use std::collections::HashMap;
-
+use std::io::Cursor;
 macro_rules! debug_log {
     ($($arg:tt)*) => {
         #[cfg(debug_assertions)]
@@ -71,7 +72,7 @@ impl Huoziyinshua {
             ("ou nei de shou", "onds"),
             ("ou xi gei", "oxg"),
             ("zou wei", "zw"),
-            ("wa ao", "waao")
+            ("wa ao", "waao"),
         ]);
 
         let sentence = ascii_to_pinyin(sentence);
@@ -121,8 +122,29 @@ impl Huoziyinshua {
     // 将当前的音频数据保存为一个wav文件，如果没有生成过音频则返回错误
     pub fn save_wav(&self, path: &str) -> Result<()> {
         if let Some(audio_data) = &self.audio_data {
-            audio_processor::write_wav(audio_data, path)?;
+            let mut file = std::fs::File::create(path)?;
+            audio_processor::write_file(audio_data, &mut file)?;
             return Ok(());
+        }
+        Err(anyhow::anyhow!("No data to save"))
+    }
+    pub fn save_and_get_wav(&self) -> Result<Vec<u8>> {
+        if let Some(audio_data) = &self.audio_data {
+            let buf: Vec<u8> = Vec::new();
+
+            let mut fake_file = Cursor::new(buf);
+            audio_processor::write_file(audio_data, &mut fake_file)?;
+            return Ok(fake_file.into_inner());
+        }
+        Err(anyhow::anyhow!("No data to save"))
+    }
+    pub fn save_and_get_wav_base64(&self) -> Result<String> {
+        if let Some(audio_data) = &self.audio_data {
+            let buf: Vec<u8> = Vec::new();
+
+            let mut fake_file = Cursor::new(buf);
+            audio_processor::write_file(audio_data, &mut fake_file)?;
+            return Ok(BASE64_STANDARD.encode(fake_file.into_inner()));
         }
         Err(anyhow::anyhow!("No data to save"))
     }
